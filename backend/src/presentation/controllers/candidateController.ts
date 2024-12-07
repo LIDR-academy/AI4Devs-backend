@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
 import { addCandidate, findCandidateById, getCandidatesByPositionService, updateCandidateStageService } from '../../application/services/candidateService';
+import { PrismaClient } from '@prisma/client';
+import { PrismaApplicationRepository } from '../../infrastructure/repositories/PrismaApplicationRepository';
+import { StageValidationService } from '../../application/services/StageValidationService';
+import { StageNotificationService } from '../../application/services/StageNotificationService';
 
 export const addCandidateController = async (req: Request, res: Response) => {
     try {
@@ -54,10 +58,37 @@ export const updateCandidateStage = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid parameters' });
         }
 
-        const updatedApplication = await updateCandidateStageService(candidateId, newStageId);
-        res.status(200).json(updatedApplication);
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+        try {
+            const prisma = new PrismaClient();
+            const applicationRepository = new PrismaApplicationRepository(prisma);
+            const stageValidator = new StageValidationService();
+            const notificationService = new StageNotificationService();
+
+            const updatedApplication = await updateCandidateStageService(
+                candidateId,
+                newStageId,
+                applicationRepository,
+                stageValidator,
+                notificationService
+            );
+
+            res.status(200).json(updatedApplication);
+        } catch (error: any) {
+            console.error('Error details:', error);
+            if (error.message.includes('Application not found')) {
+                return res.status(404).json({ error: error.message });
+            }
+            if (error.message.includes('Invalid transition')) {
+                return res.status(400).json({ error: error.message });
+            }
+            throw error;
+        }
+    } catch (error: any) {
+        console.error('Internal error:', error);
+        res.status(500).json({ 
+            error: 'Internal Server Error',
+            message: error.message 
+        });
     }
 };
 

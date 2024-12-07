@@ -123,3 +123,74 @@ curl -X PUT 'http://localhost:3010/candidates/1/stage' \
 ```
  
 ---
+
+
+## **`Refactor` updateCandidateStageService**
+### **Prompts**
+
+```markdown
+Eres un experto ingeniero de backend. Quiero que analices el uso de buenas prácticas en el servicio updateCandidateStageService de #file:candidateService.ts y sus funciones relacionadas en #file:candidateController.ts, #file:candidateRoutes.ts, #file:Candidate.ts, #file:Application.ts y #file:schema.prisma, como DDD y SOLID, y me propongas posibles mejoras. No programes nada aún, te iré indicando cuáles de las medidas que propongas quiero adoptar.
+```
+
+```markdown
+Comencemos con la primer propuesta de mejora: Separación de Responsabilidades
+
+- Crear un repositorio específico para Application
+- Separar la lógica de validación
+- Implementar un servicio de notificación para cambios de estado
+```
+
+```markdown
+Si, implementemos los cambios paso a paso, genera los shell scripts necesarios para crear los nuevos archivos si hace falta
+```
+
+```markdown
+/fix Expected 5 arguments, but got 2.
+```
+
+```markdown
+🚀 ~ updateCandidateStage ~ error: TypeError: Cannot read properties of undefined (reading 'findByCandidate') at /Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/application/services/candidateService.js:190:64 at step (/Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/application/services/candidateService.js:33:23) at Object.next (/Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/application/services/candidateService.js:14:53) at /Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/application/services/candidateService.js:8:71 at new Promise (<anonymous>) at __awaiter (/Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/application/services/candidateService.js:4:12) at updateCandidateStageService (/Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/application/services/candidateService.js:186:139) at /Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/presentation/controllers/candidateController.js:130:89 at step (/Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/presentation/controllers/candidateController.js:33:23) at Object.next (/Users/macbook/Documents/development/ia4devs/sessions/session_9/AI4Devs-backend/backend/dist/presentation/controllers/candidateController.js:14:53)
+```
+
+```markdown
+Continuemos con la siguiente propuesta de mejora:
+2. **Value Objects**
+    - Crear InterviewStage como Value Object
+    - Encapsular reglas de transición entre estados
+```
+
+```markdown
+hasta este momento, cuantas de las 6 mejoras propuestas has aplicado?
+```
+
+```markdown
+hasta este momento, cuantas de las 6 mejoras propuestas has aplicado?
+```
+
+```markdown
+Si, continúa con la implementación de value objects para interviewStage
+```
+
+```markdown
+
+```
+
+```markdown
+
+```
+
+```markdown
+
+```
+
+```markdown
+
+```
+
+```markdown
+
+```
+
+```markdown
+
+```

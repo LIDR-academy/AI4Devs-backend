@@ -5,6 +5,10 @@ import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
 import prisma from '../../prismaClient';
 import { Application } from '../../domain/models/Application';
+import { IApplicationRepository } from '../../domain/repositories/IApplicationRepository';
+import { StageValidationService } from './StageValidationService';
+import { StageNotificationService } from './StageNotificationService';
+import { InterviewStage } from '../../domain/valueObjects/InterviewStage';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -105,27 +109,27 @@ export const getCandidatesByPositionService = async (positionId: number) => {
 
 export const updateCandidateStageService = async (
     candidateId: number, 
-    newStageId: number
+    newStageId: number,
+    applicationRepository: IApplicationRepository,
+    stageValidator: StageValidationService,
+    notificationService: StageNotificationService
 ): Promise<Application> => {
-    const existingApplication = await prisma.application.findFirst({
-        where: { candidateId }
-    });
-
-    if (!existingApplication) {
+    const application = await applicationRepository.findByCandidate(candidateId);
+    
+    if (!application) {
         throw new Error('Application not found for this candidate');
     }
 
-    const updatedApplication = await prisma.application.update({
-        where: {
-            id: existingApplication.id
-        },
-        data: {
-            currentInterviewStep: newStageId
-        },
-        include: {
-            interviews: true
-        }
-    });
+    const newStage = InterviewStage.create(newStageId);
+    await stageValidator.validateStageTransition(application.currentInterviewStep, newStage.getValue());
+    
+    const updatedApplication = await applicationRepository.updateStage(application.id!, newStage.getValue());
+    
+    await notificationService.notifyStageChange(
+        application.id!,
+        application.currentInterviewStep,
+        newStage.getValue()
+    );
 
-    return new Application(updatedApplication);
+    return updatedApplication;
 };
