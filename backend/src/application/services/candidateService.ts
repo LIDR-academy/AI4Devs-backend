@@ -9,6 +9,8 @@ import { IApplicationRepository } from '../../domain/repositories/IApplicationRe
 import { StageValidationService } from './StageValidationService';
 import { StageNotificationService } from './StageNotificationService';
 import { InterviewStage } from '../../domain/valueObjects/InterviewStage';
+import { EventDispatcher } from '../../domain/events/EventDispatcher';
+import { StageUpdatedEvent } from '../../domain/events/StageUpdatedEvent';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -112,7 +114,7 @@ export const updateCandidateStageService = async (
     newStageId: number,
     applicationRepository: IApplicationRepository,
     stageValidator: StageValidationService,
-    notificationService: StageNotificationService
+    eventDispatcher: EventDispatcher
 ): Promise<Application> => {
     const application = await applicationRepository.findByCandidate(candidateId);
     
@@ -120,16 +122,21 @@ export const updateCandidateStageService = async (
         throw new Error('Application not found for this candidate');
     }
 
+    const currentStage = InterviewStage.fromExisting(application.currentInterviewStep);
     const newStage = InterviewStage.create(newStageId);
-    await stageValidator.validateStageTransition(application.currentInterviewStep, newStage.getValue());
+    
+    await stageValidator.validateStageTransition(currentStage.getValue(), newStage.getValue());
     
     const updatedApplication = await applicationRepository.updateStage(application.id!, newStage.getValue());
     
-    await notificationService.notifyStageChange(
+    const event = new StageUpdatedEvent(
         application.id!,
-        application.currentInterviewStep,
-        newStage.getValue()
+        candidateId,
+        currentStage,
+        newStage
     );
+    
+    await eventDispatcher.dispatch(event);
 
     return updatedApplication;
 };

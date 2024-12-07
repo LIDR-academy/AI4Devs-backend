@@ -182,3 +182,14 @@ can you verify the curls generated, i get an internal server error, analyze #fil
 
 ```markdown
 Ahora continuemos con la implementación de la tercera propuesta de mejora: 3. Repository Pattern - Crear interface IApplicationRepository - Implementar PrismaApplicationRepository
+```
+
+```markdown
+continuemos con la implementación de la siguiente propuesta de mejora: 4. **Domain Events**
+    - Implementar evento StageUpdated
+    - Permitir reacciones a cambios de estado
+```
+
+```markdown
+/fix Cannot find name 'EventDispatcher'.
+```

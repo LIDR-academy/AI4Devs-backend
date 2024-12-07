@@ -4,6 +4,9 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaApplicationRepository } from '../../infrastructure/repositories/PrismaApplicationRepository';
 import { StageValidationService } from '../../application/services/StageValidationService';
 import { StageNotificationService } from '../../application/services/StageNotificationService';
+import { EventDispatcher } from '../../domain/events/EventDispatcher';
+import { StageUpdatedEvent } from '../../domain/events/StageUpdatedEvent';
+import { DomainEvent } from '../../domain/events/DomainEvent';
 
 export const addCandidateController = async (req: Request, res: Response) => {
     try {
@@ -58,37 +61,36 @@ export const updateCandidateStage = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid parameters' });
         }
 
-        try {
-            const prisma = new PrismaClient();
-            const applicationRepository = new PrismaApplicationRepository(prisma);
-            const stageValidator = new StageValidationService();
-            const notificationService = new StageNotificationService();
-
-            const updatedApplication = await updateCandidateStageService(
-                candidateId,
-                newStageId,
-                applicationRepository,
-                stageValidator,
-                notificationService
+        const prisma = new PrismaClient();
+        const applicationRepository = new PrismaApplicationRepository(prisma);
+        const stageValidator = new StageValidationService();
+        const notificationService = new StageNotificationService();
+        
+        const eventDispatcher = new EventDispatcher();
+        eventDispatcher.subscribe('StageUpdated', async (event: DomainEvent) => {
+            const stageEvent = event as StageUpdatedEvent;
+            await notificationService.notifyStageChange(
+                stageEvent.applicationId,
+                stageEvent.previousStage.getValue(),
+                stageEvent.newStage.getValue()
             );
-
-            res.status(200).json(updatedApplication);
-        } catch (error: any) {
-            console.error('Error details:', error);
-            if (error.message.includes('Application not found')) {
-                return res.status(404).json({ error: error.message });
-            }
-            if (error.message.includes('Invalid transition')) {
-                return res.status(400).json({ error: error.message });
-            }
-            throw error;
-        }
-    } catch (error: any) {
-        console.error('Internal error:', error);
-        res.status(500).json({ 
-            error: 'Internal Server Error',
-            message: error.message 
         });
+
+        const updatedApplication = await updateCandidateStageService(
+            candidateId,
+            newStageId,
+            applicationRepository,
+            stageValidator,
+            eventDispatcher
+        );
+
+        res.status(200).json(updatedApplication);
+    } catch (error: any) {
+        console.error('Error details:', error);
+        if (error.message.includes('Application not found')) {
+            return res.status(404).json({ error: error.message });
+        }
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
