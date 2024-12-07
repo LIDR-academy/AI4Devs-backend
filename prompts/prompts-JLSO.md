@@ -10,6 +10,7 @@
 ## **Table of Contents**
 1. [GET /positions/:id/candidates - Prompts](#get-positionsidcandidates---prompts)
 2. [PUT /candidates/:id/stage - Prompts](#put-candidatesidstage---prompts)
+3. [Refactor updateCandidateStageService - prompts](#refactor-updatecandidatestageservice---prompts)
 
 ---
 
@@ -125,7 +126,7 @@ curl -X PUT 'http://localhost:3010/candidates/1/stage' \
 ---
 
 
-## **`Refactor` updateCandidateStageService**
+## **`Refactor` updateCandidateStageService** - prompts
 ### **Prompts**
 
 ```markdown
