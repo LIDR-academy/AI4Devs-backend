@@ -11,6 +11,9 @@ import { StageNotificationService } from './StageNotificationService';
 import { InterviewStage } from '../../domain/valueObjects/InterviewStage';
 import { EventDispatcher } from '../../domain/events/EventDispatcher';
 import { StageUpdatedEvent } from '../../domain/events/StageUpdatedEvent';
+import { ApplicationNotFoundError } from '../errors/ApplicationNotFoundError';
+import { DomainError } from '../../domain/errors/DomainError';
+import { ApplicationError } from '../errors/ApplicationError';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -119,24 +122,33 @@ export const updateCandidateStageService = async (
     const application = await applicationRepository.findByCandidate(candidateId);
     
     if (!application) {
-        throw new Error('Application not found for this candidate');
+        throw new ApplicationNotFoundError(candidateId);
     }
 
-    const currentStage = InterviewStage.fromExisting(application.currentInterviewStep);
-    const newStage = InterviewStage.create(newStageId);
-    
-    await stageValidator.validateStageTransition(currentStage.getValue(), newStage.getValue());
-    
-    const updatedApplication = await applicationRepository.updateStage(application.id!, newStage.getValue());
-    
-    const event = new StageUpdatedEvent(
-        application.id!,
-        candidateId,
-        currentStage,
-        newStage
-    );
-    
-    await eventDispatcher.dispatch(event);
-
-    return updatedApplication;
+    try {
+        const currentStage = InterviewStage.fromExisting(application.currentInterviewStep);
+        const newStage = InterviewStage.create(newStageId);
+        
+        await stageValidator.validateStageTransition(currentStage.getValue(), newStage.getValue());
+        
+        const updatedApplication = await applicationRepository.updateStage(
+            application.id!, 
+            newStage.getValue()
+        );
+        
+        const event = new StageUpdatedEvent(
+            application.id!,
+            candidateId,
+            currentStage,
+            newStage
+        );
+        
+        await eventDispatcher.dispatch(event);
+        return updatedApplication;
+    } catch (error) {
+        if (error instanceof DomainError) {
+            throw error;
+        }
+        throw new ApplicationError('Failed to update candidate stage');
+    }
 };

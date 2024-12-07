@@ -193,3 +193,33 @@ continuemos con la implementación de la siguiente propuesta de mejora: 4. **Dom
 ```markdown
 /fix Cannot find name 'EventDispatcher'.
 ```
+
+```markdown
+Argument of type 'StageNotificationService' is not assignable to parameter of type 'EventDispatcher'. Type 'StageNotificationService' is missing the following properties from type 'EventDispatcher': handlers, subscribe, dispatchts(2345)
+```
+
+```markdown
+usa el actual #file:EventDispatcher.ts
+```
+
+```markdown
+Cannot find module '../services/NotificationService' or its corresponding type declarations.ts(2307)
+```
+```markdown
+usa el #file:StageNotificationService.ts
+```
+```markdown
+explicame que hace el #file:StageNotificationService.ts
+```
+```markdown
+Ahora implementemos el siguiente punto dentro del plan de mejoras:  5. **Error Handling**
+    - Crear tipos específicos de error del dominio
+    - Mejorar manejo de errores en la capa de aplicación
+```
+```markdown
+update this import "import { ApplicationNotFoundError } from '../../domain/errors/ApplicationNotFoundError';" to import the correct #file:ApplicationNotFoundError.ts
+```
+```markdown
+ahora dame una serie de casos en los que pueda evidenciar el funcionamiento de la implementación de error handling
+```
+
