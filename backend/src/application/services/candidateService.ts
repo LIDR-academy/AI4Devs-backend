@@ -3,6 +3,17 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import prisma from '../../prismaClient';
+import { Application } from '../../domain/models/Application';
+import { IApplicationRepository } from '../../domain/repositories/IApplicationRepository';
+import { StageValidationService } from './StageValidationService';
+import { StageNotificationService } from './StageNotificationService';
+import { InterviewStage } from '../../domain/valueObjects/InterviewStage';
+import { EventDispatcher } from '../../domain/events/EventDispatcher';
+import { StageUpdatedEvent } from '../../domain/events/StageUpdatedEvent';
+import { ApplicationNotFoundError } from '../errors/ApplicationNotFoundError';
+import { DomainError } from '../../domain/errors/DomainError';
+import { ApplicationError } from '../errors/ApplicationError';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -61,5 +72,83 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
     } catch (error) {
         console.error('Error al buscar el candidato:', error);
         throw new Error('Error al recuperar el candidato');
+    }
+};
+
+export const getCandidatesByPositionService = async (positionId: number) => {
+    const applications = await prisma.application.findMany({
+        where: { positionId },
+        select: {
+            currentInterviewStep: true,
+            candidate: {
+                select: {
+                    firstName: true,
+                    lastName: true
+                }
+            },
+            interviews: {
+                select: {
+                    score: true
+                }
+            }
+        }
+    });
+
+    const candidates = applications.map(app => {
+        const candidateName = `${app.candidate?.firstName ?? ''} ${app.candidate?.lastName ?? ''}`;
+        const interviewScores = app.interviews?.map(interview => interview.score ?? 0) ?? [];
+
+        const averageScore = interviewScores.length > 0
+            ? interviewScores.reduce((a, b) => a + b, 0) / interviewScores.length
+            : null;
+
+        return {
+            candidateName,
+            currentInterviewStep: app.currentInterviewStep,
+            averageScore
+        };
+    });
+
+    return candidates;
+};
+
+export const updateCandidateStageService = async (
+    candidateId: number, 
+    newStageId: number,
+    applicationRepository: IApplicationRepository,
+    stageValidator: StageValidationService,
+    eventDispatcher: EventDispatcher
+): Promise<Application> => {
+    const application = await applicationRepository.findByCandidate(candidateId);
+    
+    if (!application) {
+        throw new ApplicationNotFoundError(candidateId);
+    }
+
+    try {
+        const currentStage = InterviewStage.fromExisting(application.currentInterviewStep);
+        const newStage = InterviewStage.create(newStageId);
+        
+        await stageValidator.validateStageTransition(currentStage.getValue(), newStage.getValue());
+        
+        const updatedApplication = await applicationRepository.updateStage(
+            application.id!, 
+            newStage.getValue()
+        );
+        
+        const event = new StageUpdatedEvent(
+            application.id!,
+            candidateId,
+            currentStage,
+            newStage
+        );
+        
+        await eventDispatcher.dispatch(event);
+        return updatedApplication;
+    } catch (error) {
+        if (error instanceof DomainError) {
+            throw error;
+        }
+        throw new ApplicationError('Failed to update candidate stage');
     }
 };
