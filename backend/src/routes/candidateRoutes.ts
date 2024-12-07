@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addCandidate, getCandidateById } from '../presentation/controllers/candidateController';
+import { addCandidate, getCandidateById, getCandidatesByPosition } from '../presentation/controllers/candidateController';
 
 const router = Router();
 
@@ -17,6 +17,8 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Move this route before the /:id route to prevent path conflicts
+router.get('/positions/:id/candidates', getCandidatesByPosition);
 router.get('/:id', getCandidateById);
 
 export default router;

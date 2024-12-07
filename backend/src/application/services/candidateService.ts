@@ -3,6 +3,7 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import prisma from '../../prismaClient';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -62,4 +63,41 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
         console.error('Error al buscar el candidato:', error);
         throw new Error('Error al recuperar el candidato');
     }
+};
+
+export const getCandidatesByPositionService = async (positionId: number) => {
+    const applications = await prisma.application.findMany({
+        where: { positionId },
+        select: {
+            currentInterviewStep: true,
+            candidate: {
+                select: {
+                    firstName: true,
+                    lastName: true
+                }
+            },
+            interviews: {
+                select: {
+                    score: true
+                }
+            }
+        }
+    });
+
+    const candidates = applications.map(app => {
+        const candidateName = `${app.candidate?.firstName ?? ''} ${app.candidate?.lastName ?? ''}`;
+        const interviewScores = app.interviews?.map(interview => interview.score ?? 0) ?? [];
+
+        const averageScore = interviewScores.length > 0
+            ? interviewScores.reduce((a, b) => a + b, 0) / interviewScores.length
+            : null;
+
+        return {
+            candidateName,
+            currentInterviewStep: app.currentInterviewStep,
+            averageScore
+        };
+    });
+
+    return candidates;
 };
