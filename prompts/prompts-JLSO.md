@@ -172,25 +172,13 @@ Si, continúa con la implementación de value objects para interviewStage
 ```
 
 ```markdown
+crea varios curls para probar el servicio #sym:updateCandidateStageService
+```
 
+
+```markdown
+can you verify the curls generated, i get an internal server error, analyze #file:candidateController.ts #file:candidateRoutes.ts #file:candidateService.ts
 ```
 
 ```markdown
-
-```
-
-```markdown
-
-```
-
-```markdown
-
-```
-
-```markdown
-
-```
-
-```markdown
-
-```
+Ahora continuemos con la implementación de la tercera propuesta de mejora: 3. Repository Pattern - Crear interface IApplicationRepository - Implementar PrismaApplicationRepository
