@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addCandidate, findCandidateById, getCandidatesByPositionService } from '../../application/services/candidateService';
+import { addCandidate, findCandidateById, getCandidatesByPositionService, updateCandidateStageService } from '../../application/services/candidateService';
 
 export const addCandidateController = async (req: Request, res: Response) => {
     try {
@@ -41,6 +41,22 @@ export const getCandidatesByPosition = async (req: Request, res: Response) => {
         const candidates = await getCandidatesByPositionService(positionId);
         res.status(200).json(candidates);
     } catch (error: unknown) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+export const updateCandidateStage = async (req: Request, res: Response) => {
+    try {
+        const candidateId = parseInt(req.params.id);
+        const { newStageId } = req.body;
+
+        if (isNaN(candidateId) || !newStageId) {
+            return res.status(400).json({ error: 'Invalid parameters' });
+        }
+
+        const updatedApplication = await updateCandidateStageService(candidateId, newStageId);
+        res.status(200).json(updatedApplication);
+    } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

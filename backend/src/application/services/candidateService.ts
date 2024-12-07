@@ -4,6 +4,7 @@ import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
 import prisma from '../../prismaClient';
+import { Application } from '../../domain/models/Application';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -100,4 +101,31 @@ export const getCandidatesByPositionService = async (positionId: number) => {
     });
 
     return candidates;
+};
+
+export const updateCandidateStageService = async (
+    candidateId: number, 
+    newStageId: number
+): Promise<Application> => {
+    const existingApplication = await prisma.application.findFirst({
+        where: { candidateId }
+    });
+
+    if (!existingApplication) {
+        throw new Error('Application not found for this candidate');
+    }
+
+    const updatedApplication = await prisma.application.update({
+        where: {
+            id: existingApplication.id
+        },
+        data: {
+            currentInterviewStep: newStageId
+        },
+        include: {
+            interviews: true
+        }
+    });
+
+    return new Application(updatedApplication);
 };
