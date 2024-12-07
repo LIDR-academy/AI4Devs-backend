@@ -222,4 +222,14 @@ update this import "import { ApplicationNotFoundError } from '../../domain/error
 ```markdown
 ahora dame una serie de casos en los que pueda evidenciar el funcionamiento de la implementación de error handling
 ```
-
+```markdown
+ahora implementemos el siguiento paso del plan de mejoras: 6. **Inyección de Dependencias**
+    - Implementar inversión de control
+    - Inyectar dependencias en lugar de instanciarlas
+```
+```markdown
+#codebase import the corresponding repositories into #file:candidateController.ts
+```
+```markdown
+create some curls to test the current services
+```

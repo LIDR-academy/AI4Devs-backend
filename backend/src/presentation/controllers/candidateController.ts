@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
 import { addCandidate, findCandidateById, getCandidatesByPositionService, updateCandidateStageService } from '../../application/services/candidateService';
-import { PrismaClient } from '@prisma/client';
-import { PrismaApplicationRepository } from '../../infrastructure/repositories/PrismaApplicationRepository';
+import { TOKENS } from '../../infrastructure/di/types';
+import { IApplicationRepository } from '../../domain/repositories/IApplicationRepository';
 import { StageValidationService } from '../../application/services/StageValidationService';
-import { StageNotificationService } from '../../application/services/StageNotificationService';
 import { EventDispatcher } from '../../domain/events/EventDispatcher';
-import { StageUpdatedEvent } from '../../domain/events/StageUpdatedEvent';
-import { DomainEvent } from '../../domain/events/DomainEvent';
+import { CustomRequest } from '../../types/custom';
 
 export const addCandidateController = async (req: Request, res: Response) => {
     try {
@@ -54,6 +52,7 @@ export const getCandidatesByPosition = async (req: Request, res: Response) => {
 
 export const updateCandidateStage = async (req: Request, res: Response) => {
     try {
+        const { container } = req as CustomRequest;
         const candidateId = parseInt(req.params.id);
         const { newStageId } = req.body;
 
@@ -61,20 +60,9 @@ export const updateCandidateStage = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid parameters' });
         }
 
-        const prisma = new PrismaClient();
-        const applicationRepository = new PrismaApplicationRepository(prisma);
-        const stageValidator = new StageValidationService();
-        const notificationService = new StageNotificationService();
-        
-        const eventDispatcher = new EventDispatcher();
-        eventDispatcher.subscribe('StageUpdated', async (event: DomainEvent) => {
-            const stageEvent = event as StageUpdatedEvent;
-            await notificationService.notifyStageChange(
-                stageEvent.applicationId,
-                stageEvent.previousStage.getValue(),
-                stageEvent.newStage.getValue()
-            );
-        });
+        const applicationRepository = container.get(TOKENS.ApplicationRepository) as IApplicationRepository;
+        const stageValidator = container.get(TOKENS.StageValidator) as StageValidationService;
+        const eventDispatcher = container.get(TOKENS.EventDispatcher) as EventDispatcher;
 
         const updatedApplication = await updateCandidateStageService(
             candidateId,
