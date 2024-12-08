@@ -157,6 +157,99 @@ POST http://localhost:3010/candidates
 }
 ```
 
+## API Endpoints
+
+### Candidates API
+
+#### GET /positions/:id/candidates
+Recupera todos los candidatos en proceso para una posición específica.
+
+**Respuesta de ejemplo:**
+```json
+[
+  {
+    "full_name": "John Doe",
+    "current_interview_step": "Phone Screen",
+    "average_score": 4.5
+  },
+  {
+    "full_name": "Jane Smith",
+    "current_interview_step": "Technical Interview",
+    "average_score": 4.75
+  }
+]
+```
+
+#### PUT /candidates/:id/stage
+Actualiza la etapa actual de entrevista de un candidato específico.
+
+**Cuerpo de la solicitud:**
+```json
+{
+    "interviewStepId": 2
+}
+```
+
+**Respuesta de ejemplo:**
+```json
+{
+    "status": "success",
+    "message": "La etapa de entrevista del candidato se actualizó con éxito."
+}
+```
+
+#### POST /candidates
+Crea un nuevo candidato en el sistema.
+
+**Cuerpo de la solicitud:**
+```json
+{
+    "firstName": "Albert",
+    "lastName": "Saelices",
+    "email": "albert.saelices@gmail.com",
+    "phone": "656874937",
+    "address": "Calle Sant Dalmir 2, 5ºB. Barcelona",
+    "educations": [
+        {
+            "institution": "UC3M",
+            "title": "Computer Science",
+            "startDate": "2006-12-31",
+            "endDate": "2010-12-26"
+        }
+    ],
+    "workExperiences": [
+        {
+            "company": "Coca Cola",
+            "position": "SWE",
+            "description": "",
+            "startDate": "2011-01-13",
+            "endDate": "2013-01-17"
+        }
+    ],
+    "cv": {
+        "filePath": "uploads/1715760936750-cv.pdf",
+        "fileType": "application/pdf"
+    }
+}
+```
+
+### Códigos de Estado HTTP
+
+- `200 OK`: La solicitud se completó exitosamente
+- `201 Created`: El recurso se creó exitosamente
+- `400 Bad Request`: Error en la solicitud del cliente
+- `404 Not Found`: Recurso no encontrado
+- `500 Internal Server Error`: Error interno del servidor
+
+### Manejo de Errores
+
+Todas las respuestas de error siguen este formato:
+```json
+{
+    "error": "Mensaje descriptivo del error"
+}
+```
+
 --------------------------------------------
 
 # LTI - Sistema de Seguimiento de Talento | ES
@@ -311,6 +404,99 @@ POST http://localhost:3010/candidates
         "filePath": "uploads/1715760936750-cv.pdf",
         "fileType": "application/pdf"
     }
+}
+```
+
+## API Endpoints
+
+### Candidates API
+
+#### GET /positions/:id/candidates
+Recupera todos los candidatos en proceso para una posición específica.
+
+**Respuesta de ejemplo:**
+```json
+[
+  {
+    "full_name": "John Doe",
+    "current_interview_step": "Phone Screen",
+    "average_score": 4.5
+  },
+  {
+    "full_name": "Jane Smith",
+    "current_interview_step": "Technical Interview",
+    "average_score": 4.75
+  }
+]
+```
+
+#### PUT /candidates/:id/stage
+Actualiza la etapa actual de entrevista de un candidato específico.
+
+**Cuerpo de la solicitud:**
+```json
+{
+    "interviewStepId": 2
+}
+```
+
+**Respuesta de ejemplo:**
+```json
+{
+    "status": "success",
+    "message": "La etapa de entrevista del candidato se actualizó con éxito."
+}
+```
+
+#### POST /candidates
+Crea un nuevo candidato en el sistema.
+
+**Cuerpo de la solicitud:**
+```json
+{
+    "firstName": "Albert",
+    "lastName": "Saelices",
+    "email": "albert.saelices@gmail.com",
+    "phone": "656874937",
+    "address": "Calle Sant Dalmir 2, 5ºB. Barcelona",
+    "educations": [
+        {
+            "institution": "UC3M",
+            "title": "Computer Science",
+            "startDate": "2006-12-31",
+            "endDate": "2010-12-26"
+        }
+    ],
+    "workExperiences": [
+        {
+            "company": "Coca Cola",
+            "position": "SWE",
+            "description": "",
+            "startDate": "2011-01-13",
+            "endDate": "2013-01-17"
+        }
+    ],
+    "cv": {
+        "filePath": "uploads/1715760936750-cv.pdf",
+        "fileType": "application/pdf"
+    }
+}
+```
+
+### Códigos de Estado HTTP
+
+- `200 OK`: La solicitud se completó exitosamente
+- `201 Created`: El recurso se creó exitosamente
+- `400 Bad Request`: Error en la solicitud del cliente
+- `404 Not Found`: Recurso no encontrado
+- `500 Internal Server Error`: Error interno del servidor
+
+### Manejo de Errores
+
+Todas las respuestas de error siguen este formato:
+```json
+{
+    "error": "Mensaje descriptivo del error"
 }
 ```
 

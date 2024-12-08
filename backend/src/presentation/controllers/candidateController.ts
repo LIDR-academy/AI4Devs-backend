@@ -1,34 +1,48 @@
 import { Request, Response } from 'express';
-import { addCandidate, findCandidateById } from '../../application/services/candidateService';
+import { CandidateService } from '../../application/services/CandidateService';
+import { PrismaCandidateRepository } from '../../infrastructure/repositories/PrismaCandidateRepository';
+import { ApplicationError } from '../../domain/errors/ApplicationError';
 
-export const addCandidateController = async (req: Request, res: Response) => {
-    try {
-        const candidateData = req.body;
-        const candidate = await addCandidate(candidateData);
-        res.status(201).json({ message: 'Candidate added successfully', data: candidate });
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(400).json({ message: 'Error adding candidate', error: error.message });
-        } else {
-            res.status(400).json({ message: 'Error adding candidate', error: 'Unknown error' });
-        }
-    }
-};
+const candidateService = new CandidateService(new PrismaCandidateRepository());
 
-export const getCandidateById = async (req: Request, res: Response) => {
+export const getCandidatesByPosition = async (req: Request, res: Response) => {
     try {
-        const id = parseInt(req.params.id);
-        if (isNaN(id)) {
-            return res.status(400).json({ error: 'Invalid ID format' });
+        const positionId = parseInt(req.params.id);
+        if (isNaN(positionId)) {
+            return res.status(400).json({ error: 'Invalid position ID format' });
         }
-        const candidate = await findCandidateById(id);
-        if (!candidate) {
-            return res.status(404).json({ error: 'Candidate not found' });
-        }
-        res.json(candidate);
+
+        const candidates = await candidateService.getCandidatesForPosition(positionId);
+        res.json(candidates);
     } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+        if (error instanceof ApplicationError) {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 };
 
-export { addCandidate };
+export const updateCandidateStage = async (req: Request, res: Response) => {
+    try {
+        const candidateId = parseInt(req.params.id);
+        const { interviewStepId } = req.body;
+
+        if (isNaN(candidateId)) {
+            return res.status(400).json({ error: 'Invalid candidate ID format' });
+        }
+
+        await candidateService.updateCandidateStage(candidateId, interviewStepId);
+        
+        res.json({
+            status: 'success',
+            message: 'Candidate\'s interview stage updated successfully.'
+        });
+    } catch (error) {
+        if (error instanceof ApplicationError) {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
