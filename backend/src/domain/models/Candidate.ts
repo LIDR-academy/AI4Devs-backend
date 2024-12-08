@@ -1,4 +1,5 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { PrismaClientInitializationError } from '@prisma/client/runtime/library';
 import { Education } from './Education';
 import { WorkExperience } from './WorkExperience';
 import { Resume } from './Resume';
@@ -98,7 +99,7 @@ export class Candidate {
                 });
             } catch (error: any) {
                 console.log(error);
-                if (error instanceof Prisma.PrismaClientInitializationError) {
+                if (error instanceof PrismaClientInitializationError) {
                     // Database connection error
                     throw new Error('No se pudo conectar con la base de datos. Por favor, asegúrese de que el servidor de base de datos esté en ejecución.');
                 } else if (error.code === 'P2025') {
@@ -116,13 +117,55 @@ export class Candidate {
                 });
                 return result;
             } catch (error: any) {
-                if (error instanceof Prisma.PrismaClientInitializationError) {
+                if (error instanceof PrismaClientInitializationError) {
                     // Database connection error
                     throw new Error('No se pudo conectar con la base de datos. Por favor, asegúrese de que el servidor de base de datos esté en ejecución.');
                 } else {
                     throw error;
                 }
             }
+        }
+    }
+
+    async updateInterviewStage(stageId: number): Promise<Application | null> {
+        try {
+            // Encontrar la aplicación activa del candidato
+            const application = await prisma.application.findFirst({
+                where: { 
+                    candidateId: this.id,
+                    // Puedes agregar condiciones adicionales aquí si es necesario
+                    // como status !== 'CLOSED'
+                }
+            });
+
+            if (!application) {
+                return null;
+            }
+
+            // Actualizar la aplicación con la nueva etapa
+            const updatedApplication = await prisma.application.update({
+                where: { id: application.id },
+                data: { 
+                    currentInterviewStep: stageId,
+                    // Puedes agregar campos adicionales aquí
+                    // como lastUpdated: new Date()
+                },
+                include: {
+                    interviews: true,
+                    position: true
+                }
+            });
+
+            // Actualizar la aplicación en la lista de aplicaciones del candidato
+            const applicationIndex = this.applications.findIndex(app => app.id === application.id);
+            if (applicationIndex !== -1) {
+                this.applications[applicationIndex] = new Application(updatedApplication);
+            }
+
+            return new Application(updatedApplication);
+        } catch (error) {
+            console.error('Error updating interview stage:', error);
+            throw error;
         }
     }
 
@@ -159,5 +202,51 @@ export class Candidate {
         });
         if (!data) return null;
         return new Candidate(data);
+    }
+
+    static async findByPosition(
+        positionId: number,
+        skip: number,
+        take: number
+    ): Promise<[Array<{
+        currentInterviewStep: number;
+        candidate: {
+            firstName: string;
+            lastName: string;
+        };
+        interviews: Array<{
+            score: number | null;
+        }>;
+    }>, number]> {
+        const [candidates, total] = await Promise.all([
+            prisma.application.findMany({
+                where: {
+                    positionId: positionId
+                },
+                select: {
+                    currentInterviewStep: true,
+                    candidate: {
+                        select: {
+                            firstName: true,
+                            lastName: true
+                        }
+                    },
+                    interviews: {
+                        select: {
+                            score: true
+                        }
+                    }
+                },
+                skip,
+                take
+            }),
+            prisma.application.count({
+                where: {
+                    positionId: positionId
+                }
+            })
+        ]);
+
+        return [candidates, total];
     }
 }
