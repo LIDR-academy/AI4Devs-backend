@@ -3,6 +3,8 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import { PrismaClient } from '@prisma/client';
+import prisma from '../singleton';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -63,3 +65,53 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
         throw new Error('Error al recuperar el candidato');
     }
 };
+
+export class CandidateService {
+    constructor(private prismaClient: PrismaClient) {}
+
+    async getCandidatesByPositionId(positionId: number) {
+        const applications = await this.prismaClient.application.findMany({
+            where: { positionId },
+            include: {
+                candidate: true,
+                interviews: true,
+            },
+        });
+
+        return applications.map(app => {
+            const fullName = `${app.candidate.firstName} ${app.candidate.lastName}`;
+            const averageScore = this.calculateAverageScore(app.interviews);
+
+            return {
+                fullName,
+                currentInterviewStep: app.currentInterviewStep,
+                averageScore,
+            };
+        });
+    }
+
+    private calculateAverageScore(interviews: { score: number | null }[]) {
+        if (interviews.length === 0) {
+            return 'No hay información de entrevistas';
+        }
+        const totalScore = interviews.reduce((sum, interview) => sum + (interview.score || 0), 0);
+        return totalScore / interviews.length;
+    }
+
+    async updateCandidateStage(applicationId: number, newStage: number) {
+        const application = await this.prismaClient.application.findUnique({
+            where: { id: applicationId }
+        });
+
+        if (!application) {
+            throw new Error('Application not found');
+        }
+
+        const updatedApplication = await this.prismaClient.application.update({
+            where: { id: applicationId },
+            data: { currentInterviewStep: newStage }
+        });
+
+        return updatedApplication;
+    }
+}
