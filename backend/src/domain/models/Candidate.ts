@@ -1,4 +1,3 @@
-// backend/src/domain/models/Candidate.ts
 import { Education } from './Education';
 import { WorkExperience } from './WorkExperience';
 import { Resume } from './Resume';
