@@ -3,6 +3,12 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import { 
+    CandidatePositionResponse, 
+    CandidatePositionPaginatedResponse 
+} from '../../presentation/types/responses/candidateResponses';
+import { Application } from '../../domain/models/Application';
+import { InterviewStep } from '../../domain/models/InterviewStep';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -61,5 +67,69 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
     } catch (error) {
         console.error('Error al buscar el candidato:', error);
         throw new Error('Error al recuperar el candidato');
+    }
+};
+
+export const findCandidatesByPosition = async (
+    positionId: number,
+    page: number = 1,
+    pageSize: number = 10
+): Promise<CandidatePositionPaginatedResponse> => {
+    const skip = (page - 1) * pageSize;
+
+    const [candidates, total] = await Candidate.findByPosition(positionId, skip, pageSize);
+
+    const formattedCandidates: CandidatePositionResponse[] = candidates.map(app => {
+        const scores = app.interviews
+            .map(interview => interview.score)
+            .filter((score): score is number => score !== null);
+            
+        const averageScore = scores.length > 0
+            ? scores.reduce((a, b) => a + b, 0) / scores.length
+            : null;
+
+        return {
+            name: `${app.candidate.firstName} ${app.candidate.lastName}`,
+            currentInterviewStep: app.currentInterviewStep,
+            averageScore
+        };
+    });
+
+    // Ordenar por puntuación media (null al final)
+    formattedCandidates.sort((a, b) => {
+        if (a.averageScore === null) return 1;
+        if (b.averageScore === null) return -1;
+        return b.averageScore - a.averageScore;
+    });
+
+    return {
+        data: formattedCandidates,
+        total,
+        page,
+        pageSize
+    };
+};
+
+export const updateCandidateInterviewStage = async (
+    candidateId: number,
+    stageId: number
+): Promise<Application | null> => {
+    try {
+        // Verificar si la etapa existe
+        const interviewStep = await InterviewStep.findOne(stageId);
+        if (!interviewStep) {
+            throw new Error('Interview stage not found');
+        }
+
+        // Obtener el candidato y actualizar su etapa
+        const candidate = await Candidate.findOne(candidateId);
+        if (!candidate) {
+            return null;
+        }
+
+        return await candidate.updateInterviewStage(stageId);
+    } catch (error) {
+        console.error('Error in updateCandidateInterviewStage:', error);
+        throw error;
     }
 };
