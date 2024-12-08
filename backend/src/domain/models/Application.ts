@@ -50,4 +50,12 @@ export class Application {
         if (!data) return null;
         return new Application(data);
     }
+
+    static async findFirst(criteria: any): Promise<Application | null> {
+        const data = await prisma.application.findFirst({
+            where: criteria,
+        });
+        if (!data) return null;
+        return new Application(data);
+    }    
 }

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addCandidate, findCandidateById } from '../../application/services/candidateService';
+import { addCandidate, findCandidateById,getCandidatesForPosition,updateCandidateStageService } from '../../application/services/candidateService';
 
 export const addCandidateController = async (req: Request, res: Response) => {
     try {
@@ -31,4 +31,32 @@ export const getCandidateById = async (req: Request, res: Response) => {
     }
 };
 
-export { addCandidate };
+export const getCandidatesByPosition = async (req: Request, res: Response) => {
+    try {
+      const { id: positionId } = req.params;
+      const candidates = await getCandidatesForPosition(parseInt(positionId)); // Service call
+      res.status(200).json(candidates);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error retrieving candidates' });
+    }
+  };
+
+  export const updateCandidateStage = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { currentInterviewStep } = req.body;
+  
+    if (!currentInterviewStep) {
+      return res.status(400).json({ message: 'currentInterviewStep is required' });
+    }
+  
+    try {
+      const updatedCandidate = await updateCandidateStageService(Number(id), currentInterviewStep);
+      res.status(200).json(updatedCandidate);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error updating candidate stage' });
+    }
+  };
+  
+export { addCandidate  };
