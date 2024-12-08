@@ -38,4 +38,8 @@ export class CandidateService {
             throw new Error('Error retrieving candidate');
         }
     }
+
+    async updateCurrentStage(candidateId: number, newStageId: number): Promise<void> {
+        await this.candidateRepository.updateCurrentStage(candidateId, newStageId);
+    }
 }

@@ -14,3 +14,8 @@ There's a lot of duplicated logic between the #file:CandidateService.ts class an
 
 ---
 
+@workspace Let's now create a new endpoint, GET /positions/:id/candidates, which will return all candidates with an active application for the requested positionID. The response must contain the full name of each candidate, their current interview step, and the average interview score for their interviews. Take into account the database structure, defined in #file:schema.prisma.
+
+---
+
+@workspace Let's now add another endpoint, PUT /candidates/:id/stage, which updates the current stage for a candidate

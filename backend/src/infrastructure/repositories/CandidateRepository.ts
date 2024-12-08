@@ -1,4 +1,3 @@
-// backend/src/infrastructure/repositories/CandidateRepository.ts
 import { PrismaClient, Prisma } from '@prisma/client';
 import { ICandidateRepository } from '../../domain/repositories/ICandidateRepository';
 import { Candidate } from '../../domain/models/Candidate';
@@ -124,5 +123,19 @@ export class CandidateRepository implements ICandidateRepository {
         });
         if (!data) return null;
         return new Candidate(data);
+    }
+
+    async updateCurrentStage(candidateId: number, newStageId: number): Promise<void> {
+        await prisma.application.updateMany({
+            where: {
+                candidateId: candidateId,
+                currentInterviewStep: {
+                    not: null
+                }
+            },
+            data: {
+                currentInterviewStep: newStageId
+            }
+        });
     }
 }
