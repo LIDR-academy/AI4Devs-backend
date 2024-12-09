@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { Education } from './Education';
 import { WorkExperience } from './WorkExperience';
 import { Resume } from './Resume';
@@ -34,14 +34,12 @@ export class Candidate {
     async save() {
         const candidateData: any = {};
 
-        // Solo añadir al objeto candidateData los campos que no son undefined
         if (this.firstName !== undefined) candidateData.firstName = this.firstName;
         if (this.lastName !== undefined) candidateData.lastName = this.lastName;
         if (this.email !== undefined) candidateData.email = this.email;
         if (this.phone !== undefined) candidateData.phone = this.phone;
         if (this.address !== undefined) candidateData.address = this.address;
 
-        // Añadir educations si hay alguna para añadir
         if (this.education.length > 0) {
             candidateData.educations = {
                 create: this.education.map(edu => ({
@@ -53,7 +51,6 @@ export class Candidate {
             };
         }
 
-        // Añadir workExperiences si hay alguna para añadir
         if (this.workExperience.length > 0) {
             candidateData.workExperiences = {
                 create: this.workExperience.map(exp => ({
@@ -66,7 +63,6 @@ export class Candidate {
             };
         }
 
-        // Añadir resumes si hay alguno para añadir
         if (this.resumes.length > 0) {
             candidateData.resumes = {
                 create: this.resumes.map(resume => ({
@@ -76,7 +72,6 @@ export class Candidate {
             };
         }
 
-        // Añadir applications si hay alguna para añadir
         if (this.applications.length > 0) {
             candidateData.applications = {
                 create: this.applications.map(app => ({
@@ -90,39 +85,14 @@ export class Candidate {
         }
 
         if (this.id) {
-            // Actualizar un candidato existente
-            try {
-                return await prisma.candidate.update({
-                    where: { id: this.id },
-                    data: candidateData
-                });
-            } catch (error: any) {
-                console.log(error);
-                if (error instanceof Prisma.PrismaClientInitializationError) {
-                    // Database connection error
-                    throw new Error('No se pudo conectar con la base de datos. Por favor, asegúrese de que el servidor de base de datos esté en ejecución.');
-                } else if (error.code === 'P2025') {
-                    // Record not found error
-                    throw new Error('No se pudo encontrar el registro del candidato con el ID proporcionado.');
-                } else {
-                    throw error;
-                }
-            }
+            return await prisma.candidate.update({
+                where: { id: this.id },
+                data: candidateData,
+            });
         } else {
-            // Crear un nuevo candidato
-            try {
-                const result = await prisma.candidate.create({
-                    data: candidateData
-                });
-                return result;
-            } catch (error: any) {
-                if (error instanceof Prisma.PrismaClientInitializationError) {
-                    // Database connection error
-                    throw new Error('No se pudo conectar con la base de datos. Por favor, asegúrese de que el servidor de base de datos esté en ejecución.');
-                } else {
-                    throw error;
-                }
-            }
+            return await prisma.candidate.create({
+                data: candidateData,
+            });
         }
     }
 
@@ -159,5 +129,25 @@ export class Candidate {
         });
         if (!data) return null;
         return new Candidate(data);
+    }
+
+    static async findApplicationsByPositionId(positionId: number): Promise<Application[]> {
+        const data = await prisma.application.findMany({
+            where: { positionId },
+            include: {
+                candidate: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
+                interviews: {
+                    select: {
+                        score: true,
+                    },
+                },
+            },
+        });
+        return data.map(app => new Application(app));
     }
 }
