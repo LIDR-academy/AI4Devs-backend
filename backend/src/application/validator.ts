@@ -77,6 +77,12 @@ const validateCV = (cv: any) => {
     }
 };
 
+const validateCurrentInterviewStepId = (id: number) => {
+    if (!id || isNaN(id)) {
+        throw new Error('ID de etapa de entrevista inválido');
+    }
+};
+
 export const validateCandidateData = (data: any) => {
     if (data.id) {
         // If id is provided, we are editing an existing candidate, so fields are not mandatory
@@ -103,5 +109,9 @@ export const validateCandidateData = (data: any) => {
 
     if (data.cv && Object.keys(data.cv).length > 0) {
         validateCV(data.cv);
+    }
+
+    if (data.currentInterviewStepId) {
+        validateCurrentInterviewStepId(data.currentInterviewStepId);
     }
 };

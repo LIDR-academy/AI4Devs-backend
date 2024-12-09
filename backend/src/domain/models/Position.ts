@@ -83,5 +83,41 @@ export class Position {
         if (!data) return null;
         return new Position(data);
     }
+
+    async getCandidatesWithInterviewInfo() {
+        const position = await prisma.position.findUnique({
+            where: { 
+                id: this.id 
+            },
+            select: {
+                applications: {
+                    select: {
+                        candidate: {
+                            select: {
+                                firstName: true,
+                                lastName: true
+                            }
+                        },
+                        interviewStep: {
+                            select: {
+                                name: true
+                            }
+                        },
+                        interviews: {
+                            select: {
+                                score: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!position) {
+            return null;
+        }
+
+        return position;
+    }
 }
 

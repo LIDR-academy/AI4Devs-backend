@@ -185,4 +185,45 @@ paths:
           description: Invalid file type, only PDF and DOCX are allowed
         '500':
           description: Error during the file upload process
+  /candidates/{id}/stage:
+    put:
+      summary: Actualizar la etapa del candidato
+      description: Actualiza la fase actual del proceso de entrevista en la que se encuentra un candidato específico.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID del candidato a actualizar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentInterviewStepId:
+                  type: integer
+                  description: ID de la nueva etapa de entrevista
+              required:
+                - currentInterviewStepId
+      responses:
+        '200':
+          description: Etapa actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Candidate'
+        '400':
+          description: Solicitud incorrecta (datos inválidos)
+        '404':
+          description: Candidato no encontrado
+        '500':
+          description: Error interno del servidor
 

@@ -3,6 +3,7 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import { InterviewStep } from '../../domain/models/InterviewStep';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -56,10 +57,38 @@ export const addCandidate = async (candidateData: any) => {
 
 export const findCandidateById = async (id: number): Promise<Candidate | null> => {
     try {
-        const candidate = await Candidate.findOne(id); // Cambio aquí: pasar directamente el id
+        const candidate = await Candidate.findOne(id);
         return candidate;
     } catch (error) {
         console.error('Error al buscar el candidato:', error);
         throw new Error('Error al recuperar el candidato');
+    }
+};
+
+// Nueva función para actualizar la etapa del candidato
+export const updateCandidateStage = async (candidateId: number, newStageId: number): Promise<Candidate | null> => {
+    try {
+        const candidate = await Candidate.findOne(candidateId);
+        if (!candidate) {
+            return null;
+        }
+
+        // Validar que la nueva etapa existe
+        const interviewStep = await InterviewStep.findOne(newStageId);
+        if (!interviewStep) {
+            throw new Error('La etapa de entrevista proporcionada no existe');
+        }
+
+        // Actualizar todas las aplicaciones del candidato
+        for (const application of candidate.applications) {
+            application.currentInterviewStep = newStageId;
+            await application.save();
+        }
+
+        // Obtener el candidato actualizado
+        const updatedCandidate = await findCandidateById(candidateId);
+        return updatedCandidate;
+    } catch (error: any) {
+        throw new Error('Error al actualizar la etapa del candidato: ' + error.message);
     }
 };
