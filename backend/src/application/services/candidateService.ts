@@ -3,6 +3,7 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import { Application } from '../../domain/models/Application';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -63,3 +64,30 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
         throw new Error('Error al recuperar el candidato');
     }
 };
+
+export const getCandidatesForPosition = async (positionId: number) => {
+    const candidates = await Candidate.findByPosition(positionId);
+
+    return candidates.map((candidate) => ({
+        id: candidate.id,
+        fullName: `${candidate.firstName} ${candidate.lastName}`,
+        currentInterviewStep: candidate.applications[0]?.currentInterviewStep || null,
+        averageScore:
+            candidate.applications[0]?.interviews.reduce(
+                (sum, interview) => sum + (interview.score || 0),
+                0
+            ) / candidate.applications[0]?.interviews.length || null,
+    }));
+};
+
+  
+export const updateCandidateStageService = async (candidateId: number, currentInterviewStep: number) => {
+    const application = await Application.findFirst({ candidateId });
+
+    if (!application) {
+      throw new Error(`Application for candidate ${candidateId} not found`);
+    }
+  
+    application.currentInterviewStep = currentInterviewStep;
+  return await application.save();
+  };
