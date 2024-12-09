@@ -50,4 +50,58 @@ export class Application {
         if (!data) return null;
         return new Application(data);
     }
+
+    async updateStage(newStageId: number): Promise<Application> {
+        // Validar que la aplicación existe
+        const application = await prisma.application.findUnique({
+            where: { id: this.id },
+            include: {
+                position: {
+                    include: {
+                        interviewFlow: {
+                            include: {
+                                interviewSteps: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!application) {
+            throw new Error('Application not found');
+        }
+
+        // Validar que la nueva etapa pertenece al flujo correcto
+        const validStep = application.position.interviewFlow.interviewSteps.find(
+            step => step.id === newStageId
+        );
+
+        if (!validStep) {
+            throw new Error('Invalid interview step for this position');
+        }
+
+        // Actualizar la etapa actual
+        const updatedApplication = await prisma.application.update({
+            where: { id: this.id },
+            data: {
+                currentInterviewStep: newStageId,
+                interviews: {
+                    create: {
+                        interviewStepId: newStageId,
+                        interviewDate: new Date(),
+                        score: null,
+                        notes: '',
+                        employeeId: 1
+                    }
+                }
+            },
+            include: {
+                interviews: true,
+                interviewStep: true
+            }
+        });
+
+        return new Application(updatedApplication);
+    }
 }
