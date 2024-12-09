@@ -3,6 +3,8 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import { Application } from '../../domain/models/Application';
+import { InterviewStep } from '../../domain/models/InterviewStep';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -61,5 +63,42 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
     } catch (error) {
         console.error('Error al buscar el candidato:', error);
         throw new Error('Error al recuperar el candidato');
+    }
+};
+
+export const getCandidatesByPositionId = async (positionId: number) => {
+    try {
+        console.log('Fetching applications for position ID:', positionId);
+        const applications = await Application.findMany(positionId);
+        console.log('Applications fetched:', applications);
+        return applications.map(app => ({
+            fullName: `${app.candidate.firstName} ${app.candidate.lastName}`,
+            current_interview_step: app.currentInterviewStep,
+            average_score: app.interviews.reduce((acc, interview) => acc + (interview.score || 0), 0) / app.interviews.length,
+        }));
+    } catch (error) {
+        console.error('Error fetching applications:', error);
+        throw error;
+    }
+};
+
+export const updateCandidateStageById = async (candidateId: number, stage: number) => {
+    try {
+        const application = await Application.findByCandidateId(candidateId);
+        if (!application) {
+            throw new Error('Application not found');
+        }
+
+        const interviewStep = await InterviewStep.findOne(stage);
+        if (!interviewStep) {
+            throw new Error('Interview step not found');
+        }
+
+        application.currentInterviewStep = stage;
+        await application.save();
+        return application;
+    } catch (error) {
+        console.error('Error updating candidate stage:', error);
+        throw error;
     }
 };

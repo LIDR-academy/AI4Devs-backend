@@ -3,9 +3,11 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create Companies
-  const company1 = await prisma.company.create({
-    data: {
+  // Create or update Companies
+  const company1 = await prisma.company.upsert({
+    where: { name: 'LTI' },
+    update: {},
+    create: {
       name: 'LTI',
     },
   });
