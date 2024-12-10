@@ -28,8 +28,8 @@ export class Position {
         this.interviewFlowId = data.interviewFlowId;
         this.title = data.title;
         this.description = data.description;
-        this.status = data.status ?? 'Draft';
-        this.isVisible = data.isVisible ?? false;
+        this.status = data.status || 'Draft';
+        this.isVisible = data.isVisible || false;
         this.location = data.location;
         this.jobDescription = data.jobDescription;
         this.requirements = data.requirements;
@@ -61,7 +61,7 @@ export class Position {
             benefits: this.benefits,
             companyDescription: this.companyDescription,
             applicationDeadline: this.applicationDeadline,
-            contactInfo: this.contactInfo,
+            contactInfo: this.contactInfo
         };
 
         if (this.id) {
@@ -83,5 +83,39 @@ export class Position {
         if (!data) return null;
         return new Position(data);
     }
-}
 
+    // Método específico para obtener candidatos de una posición
+    static async getCandidatesWithStatus(positionId: number) {
+        const result = await prisma.position.findUnique({
+            where: { id: positionId },
+            select: {
+                applications: {
+                    select: {
+                        candidate: {
+                            select: {
+                                firstName: true,
+                                lastName: true,
+                            }
+                        },
+                        currentInterviewStep: true,
+                        interviews: {
+                            select: {
+                                score: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!result) return null;
+
+        return result.applications.map(app => ({
+            fullName: `${app.candidate.firstName} ${app.candidate.lastName}`,
+            currentInterviewStep: app.currentInterviewStep,
+            averageScore: app.interviews.length > 0 
+                ? app.interviews.reduce((acc, interview) => acc + (interview.score || 0), 0) / app.interviews.length 
+                : null
+        }));
+    }
+}

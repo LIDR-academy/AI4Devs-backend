@@ -1,64 +1,54 @@
-import { Request, Response, NextFunction } from 'express';
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
-import candidateRoutes from './routes/candidateRoutes';
-import { uploadFile } from './application/services/fileUploadService';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
+import { uploadFile } from './application/services/fileUploadService';
+import { addCandidate } from './application/services/candidateService';
+import positionRoutes from './presentation/routes/positionRoutes';
 
-// Extender la interfaz Request para incluir prisma
-declare global {
-  namespace Express {
-    interface Request {
-      prisma: PrismaClient;
-    }
-  }
-}
+const app = express();
 
-dotenv.config();
-const prisma = new PrismaClient();
-
-export const app = express();
-export default app;
-
-// Middleware para parsear JSON. Asegúrate de que esto esté antes de tus rutas.
+// Middlewares
+app.use(cors());
 app.use(express.json());
 
-// Middleware para adjuntar prisma al objeto de solicitud
-app.use((req, res, next) => {
-  req.prisma = prisma;
-  next();
+// Swagger configuration
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'AI4Devs Candidate API',
+            version: '1.0.0',
+            description: 'API for managing candidate data in the AI4Devs recruitment system.',
+        },
+    },
+    apis: ['./api-spec.yaml', './src/infrastructure/routes/*.ts']// path to your API specs
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Routes
+app.post('/candidates', async (req, res) => {
+    try {
+        const candidate = await addCandidate(req.body);
+        res.status(201).json(candidate);
+    } catch (error: any) {
+        res.status(400).json({ error: error.message });
+    }
 });
 
-// Middleware para permitir CORS desde http://localhost:3000
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
-
-// Import and use candidateRoutes
-app.use('/candidates', candidateRoutes);
-
-// Route for file uploads
-app.post('/upload', uploadFile);
-
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
+app.post('/upload', (req, res) => {
+    uploadFile(req, res);
 });
 
-const port = 3010;
+// Nuevas rutas de posiciones
+app.use('/positions', positionRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Hola LTI!');
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.type('text/plain'); 
-  res.status(500).send('Something broke!');
-});
-
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+export default app;
