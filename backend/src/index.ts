@@ -5,6 +5,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import { uploadFile } from './application/services/fileUploadService';
 import { addCandidate } from './application/services/candidateService';
 import positionRoutes from './presentation/routes/positionRoutes';
+import candidateRoutes from './presentation/routes/candidateRoutes';
 
 const app = express();
 
@@ -45,7 +46,11 @@ app.post('/upload', (req, res) => {
 // Nuevas rutas de posiciones
 app.use('/positions', positionRoutes);
 
-const PORT = process.env.PORT || 3000;
+// Registrar las rutas de candidatos
+app.use('/candidates', candidateRoutes);
+
+
+const PORT = process.env.PORT || 3010 ;
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
