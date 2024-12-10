@@ -47,8 +47,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const port = 3010;
-
 app.get('/', (req, res) => {
   res.send('Hola LTI!');
 });
@@ -59,6 +57,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(500).send('Something broke!');
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  const port = 3020;
+  app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
+  });
+}
