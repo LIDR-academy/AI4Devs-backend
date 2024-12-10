@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addCandidate, findCandidateById } from '../../application/services/candidateService';
+import { addCandidate, findCandidateById, updateCandidateStage } from '../../application/services/candidateService';
 
 export const addCandidateController = async (req: Request, res: Response) => {
     try {
@@ -15,7 +15,7 @@ export const addCandidateController = async (req: Request, res: Response) => {
     }
 };
 
-export const getCandidateById = async (req: Request, res: Response) => {
+export const getCandidateByIdController = async (req: Request, res: Response) => {
     try {
         const id = parseInt(req.params.id);
         if (isNaN(id)) {
@@ -31,4 +31,17 @@ export const getCandidateById = async (req: Request, res: Response) => {
     }
 };
 
-export { addCandidate };
+export const updateCandidateStageController = async (req: Request, res: Response) => {
+    try {
+        const candidateId = parseInt(req.params.id);
+        const { newStageId } = req.body;
+        const result = await updateCandidateStage(candidateId, newStageId);
+        res.status(200).json(result);
+    } catch (error) {
+        if (error instanceof Error) {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "An unexpected error occurred" });
+        }
+    }
+};

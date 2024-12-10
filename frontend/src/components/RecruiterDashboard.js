@@ -19,6 +19,12 @@ const RecruiterDashboard = () => {
                         </Link>
                     </Card>
                 </Col>
+                <Col>
+                    <Card className="shadow p-4">
+                        <h5 className="mb-4">Candidatos en Proceso</h5>
+                        <Link to="/positions/1/candidates">Ver Kanban de Candidatos</Link>
+                    </Card>
+                </Col>
             </Row>
         </Container>
     );
